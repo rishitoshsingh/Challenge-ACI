@@ -1,0 +1,33 @@
+<?php  $dbusername="id7453124_datageeks";  $dbpassword="bibhu123";   $server="https://irrigation-syytem.000webhostapp.com/"; $My_db="id7453124_sensor_data";  $dbconnect =mysql_pconnect($server,$dbusername,$dbpassword) ;  $dbselect =mysql_select_db("u881ø42Ø73_ahmed" ,$dbconnect);  // Prepare the SQL statement  $sql="INSERT INTO Data (Pressure,Temperature,Humidity,Distance,Moisture) VALUES('""')";  mysql_query($sql); ?>
+
+
+
+<?php
+$lat=$_GET['lat'];
+$lng=$_GET['lng'];
+ 
+  $servername = "localhost";
+  $username = "root";
+  $password = "";
+  $dbname = "gsm_test";
+	$conn = mysqli_connect($servername,$username,$password,$dbname);
+ 
+if (!$conn) {
+    		die("Connection failed with database: " . mysqli_connect_error());
+	}
+	
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+  }
+ 
+  
+$sql = "INSERT INTO `test`(`latitude`,`longitude`) VALUES ('$lat','$lng')";
+ 
+if ($conn->query($sql) === TRUE) {
+    echo "New record created successfully";
+} else {
+    echo "Error: " . $sql . "<br>" . $conn->error;
+}
+ 
+$conn->close();
+?>  

@@ -1,5 +1,5 @@
 #include <SoftwareSerial.h>
-SoftwareSerial myGsm(7,8);
+SoftwareSerial myGsm(8,13);
 
 void setup()
 {
@@ -28,7 +28,7 @@ void setup()
  delay(2000); 
  printSerialData();
  
- myGsm.println("AT+HTTPPARA=\"URL\",\"http://api.thingspeak.com/apps/thinghttp/send_request?api_key=VV7WQ9DS19E2BNNI\"");// setting the httppara, 
+ myGsm.println("AT+HTTPPARA=\"URL\",\"https://irrigation-syytem.000webhostapp.com/write_file.php?humidity=100\"");// setting the httppara, 
  //the second parameter is the website from where you want to access data 
  delay(1000);
  printSerialData();

@@ -1,5 +1,9 @@
 #include <LiquidCrystal.h>
 #include <SoftwareSerial.h>
+
+#include "Adafruit_BMP085.h"
+#include <Wire.h>
+
 #include "SFE_BMP180.h"
 #include "pressureCalculate.h"
 #include "dht.h"
@@ -9,7 +13,10 @@ const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 SoftwareSerial gprsSerial(8, 13);
 
-//SFE_BMP180 pressureSensor;
+SFE_BMP180 pressureSensor;
+Adafruit_BMP085 bmp;
+
+ 
 dht DHT;
 // Ultrasonic   
 const int trigPin = 9;
@@ -24,7 +31,7 @@ long duration;
 // Relay
 #define ledPin 7
 int state = 0;
-
+int sop = 0;
 
 
 // Sensor Readings
@@ -34,6 +41,32 @@ double pressure;
 double moisture;
 int distance;
 
+void switchPump(){
+    if(sop == 0){
+      sop = 1;
+      lcd.clear();
+      lcd.print("Message Received");
+      lcd.setCursor(0,1);
+      lcd.print("Pump Wsitched On...");
+    } else {
+      sop = 0;
+      lcd.clear();
+      lcd.print("Message Received");
+      lcd.setCursor(0,1);
+      lcd.print("Pump Wsitched Off...");
+    }
+}
+
+String extractSMS(){
+  switchPump();
+    String buffer;
+    while (gprsSerial.available()){
+        char c = gprsSerial.read();
+        buffer.concat(c);
+        delay(10);
+    }
+    return buffer;
+}
 
 void setup(){
   // set up the LCD's number of columns and rows:
@@ -72,6 +105,8 @@ void setup(){
   delay(2000);
   toSerial();
 
+  gprsSerial.println("AT+CNMI=2,2,0,0,0"); // AT Command to recieve a live SMS
+
   
   pinMode(ledPin, OUTPUT);
   // Sets the trigPin as an Output
@@ -81,6 +116,16 @@ void setup(){
   digitalWrite(ledPin, LOW);
   
 //  if (pressureSensor.begin())
+//    Serial.println("BMP180 init success");
+//  else {
+//    lcd.clear();
+//    lcd.print("Pressure Sensor");
+//    lcd.setCursor(0,1);
+//    lcd.print("Failed, Restart Pls");
+//    Serial.println("BMP180 init fail\n\n");
+//    while(1); // Pause forever.
+//  } 
+//if (!bmp.begin())
 //    Serial.println("BMP180 init success");
 //  else {
 //    lcd.clear();
@@ -111,6 +156,7 @@ void loop(){
     duration = pulseIn(echoPin, HIGH);
     distance = duration*0.343/2;
     pressure = 998.0;
+//pressure = bmp.readPressure();
 //    pressure = calculatePressure(pressureSensor);
     
   lcd.clear();
@@ -160,7 +206,30 @@ apiCall();
       Serial.println("LED: ON");
       state = 0;
      } 
-    
+     ////////////////////////////////////////////////////
+     if (gprsSerial.available()>0){
+      String buffer = extractSMS();
+      Serial.println(buffer);
+//       if (buffer.startsWith("\r\n+CMT: ")){
+          buffer.remove(0, 51);
+          int len = buffer.length();
+          // Remove \r\n from tail
+          buffer.remove(len - 2, 2);
+        
+          Serial.println(buffer);
+          if(buffer.equals("1")){
+            Serial.println("Pump ON");
+            digitalWrite(ledPin, HIGH);
+            delay(10000);
+            digitalWrite(ledPin, LOW);
+          } else if(buffer.equals("0")){
+            Serial.println("Pump OFF");
+            digitalWrite(ledPin, LOW);
+//           delay(10000);
+//          digitalWrite(ledPin, HIGH);
+          }
+//        }
+     }
 }
 
 void initHttp(){
@@ -178,8 +247,9 @@ void apiCall(){
   char mois[10];
   dtostrf( humidity,5, 2, hum);
   dtostrf( temperature,5, 2,tem );
-  dtostrf( pressure,6, 2,pres );
-  dtostrf( moisture,5, 2,mois );
+  dtostrf( pressure,4, 2,pres );
+//  dtostrf( pressure,6, 2,pres );
+  dtostrf( moisture,4, 2,mois );
   
   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://irrigation-syytem.000webhostapp.com/write_file.php?humidity=%s&temperature=%s&pressure=%s&moisture=%s&distance=%d\"", hum,tem,pres,mois,distance);
   Serial.println(url);
@@ -196,8 +266,9 @@ void apiCall(){
    toSerial();
 
    // read server response
-   gprsSerial.println("AT+HTTPREAD"); 
+   gprsSerial.println("AT+HTTPREAD=0,1"); 
    delay(1000);
+//   initiateWaterPump();
    toSerial();
 
    gprsSerial.println("");

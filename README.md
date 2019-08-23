@@ -1,5 +1,5 @@
 # Challenge-ACI
-## **Automated-Irrigation-Sytem**
+## **Smart-Irrigation-Sytem**
 
 ChallengeACI Hackathon (Hyderabd ,GRIET College) 2019 
 Hardware module (Aurdino) intregated with server collecting data about Enviroment(temperature,humidity,pressure etc).
